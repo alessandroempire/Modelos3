@@ -3,8 +3,7 @@ import random
 import simpy
 from operator import attrgetter
 
-""" Clase que representa un cajero cajero """
-
+""" Clase que representa un cajero """
 
 class Cajero():
 
@@ -19,7 +18,7 @@ RANDOM_SEED       = 42      # La libreria de random requiere un seed
 TIEMPO_SIMULACION = 480     # La simulacion dura 480 minutos
 
 NUMERO_CAJEROS      = 4     # Existen cuatro cajeros en el banco
-CLIENTES_MINUTO     = 1     # Se genera un cliente nuevo por minuto
+CLIENTES_MINUTO     = 1     # Se genera un cliente nuevo por minuto (60 por hora! 60/60 = 1 por min)
 TIEMPO_SERVICIO_MIN = 3     # El minimo tiempo de servicio es tres minutos
 TIEMPO_SERVICIO_MAX = 5     # El maximo tiempo de servicio es cinco minutos
 
@@ -56,8 +55,8 @@ def Declinar():
 def generador(env, clientes_minuto, cajeros):
     """Generar Clientes de forma alazar"""
     global total_clientes, total_tiempo
-    # Esta variabla actuara de contador de clientes
-    cliente_actual = 1
+    
+    cliente_actual = 1      # Esta variabla actuara de contador de clientes
 
     while True:
         # Se crea un nuevo cliente y se procesa
@@ -78,6 +77,7 @@ def generador(env, clientes_minuto, cajeros):
 def cliente(env, nombre_cliente, cajeros):
     """El cliente llegara al banco, si se queda esperar su turno y
        luego de ser atendido se ira"""
+
     global cajeros_libres, clientes_encolados, clientes_atendidos
     global clientes_declinan, tiempos_esperados, TIEMPO_SERVICIO_MIN
     global TIEMPO_SERVICIO_MAX, TIEMPO_SIMULACION
@@ -105,8 +105,8 @@ def cliente(env, nombre_cliente, cajeros):
         
         # Luego generamos en tiempo de atencion por parte del cajero usando la
         # distribucion uniforme
-        tiempo_atencion = random.uniform(
-            TIEMPO_SERVICIO_MIN, TIEMPO_SERVICIO_MAX)
+        tiempo_atencion = random.uniform(TIEMPO_SERVICIO_MIN, TIEMPO_SERVICIO_MAX)
+
         # Es importante revisar si el tiempo de atencion tomara mas que el
         # tiempo restante de simulacion de forma que el cajero sea devuelto a
         # la lista antes de salir de la simulacion
@@ -116,8 +116,7 @@ def cliente(env, nombre_cliente, cajeros):
 
         tiempos_esperados.append(espera)
 
-        # Se actualiza el tiempo de trabajo para el cajero y se devuelve a la
-        # lista
+        # Se actualiza el tiempo de trabajo para el cajero y se devuelve a la lista
         cajero_activo.tiempo_trabajado += tiempo_atencion
         cajeros_libres.append(cajero_activo)
 
@@ -127,8 +126,7 @@ def cliente(env, nombre_cliente, cajeros):
 
 
 """ El programa Main """
-print('Ejercicio 01')
-print('\n')
+print('Ejercicio 01 \n')
 
 env = simpy.Environment()
 

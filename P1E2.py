@@ -1,13 +1,8 @@
-"""
-Proyecto 01 Ejercicio 02
-
-"""
 import random
 import simpy
 from operator import attrgetter
 
 """ Clase representante de un cajero """
-
 
 class Cajero():
 
@@ -67,9 +62,8 @@ def numero_cajero_menor_cola(cajeros):
     return numero_cajero
 
 
-def clienteDeclina(cajeros):
-    """Dado el numero de clientes en cola determina si el cliente se queda
-       o se va"""
+def Declinar(cajeros):
+    """Determinar si cliente declina o no """
 
     tamano_cola = len(cajero_menor_cola(cajeros).resource.queue)
 
@@ -121,7 +115,7 @@ def cliente(env, nombre_cliente, cajeros):
     llegada = env.now
 
     # Se chequea si el cliente declinara dado el estado de la cola
-    if clienteDeclina(cajeros):
+    if Declinar(cajeros):
         clientes_declinan += 1
         return
 
@@ -152,22 +146,20 @@ def cliente(env, nombre_cliente, cajeros):
         # Se actualizan las variables de estado de la simulacion
         clientes_atendidos += 1
 
+
 # Preparamos y comenzamos la simulacion
-print('Ejercicio 02')
-print('\n')
-# random.seed(RANDOM_SEED)
+print('Ejercicio 02 \n')
+
 env = simpy.Environment()
 
 # Declaramos un nuevo recursos que representa los N cajeros
 # Esta cola mantendra los cajeros libres a lo largo de la ejecucion
-cajeros = [
-    Cajero(1, env), Cajero(2, env), Cajero(3, env), Cajero(4, env)]
+cajeros = [Cajero(1, env), Cajero(2, env), Cajero(3, env), Cajero(4, env)]
 
 # Procesamos el generador de clientes y corremos la simulacion
 env.process(generador(env, CLIENTES_MINUTO, cajeros))
 env.run(until=TIEMPO_SIMULACION)
 
-# Por ultimo se imprimen los datos pertinentes
 print('a) El tiempo de espera promedio fue: %f'
       % (sum(tiempos_esperados) / len(tiempos_esperados)))
 print('b) El porcentaje de clientes que declinaron es: %.0f%%'
