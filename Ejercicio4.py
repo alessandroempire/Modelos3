@@ -40,7 +40,6 @@ def gReparar():
     return (-0.5)*math.log(1-x)
  
 #Tiempo que tarda una pieza funcionando hasta danarse.
-
 def gFuncionandoDano():
     xx=random.uniform(0,1)
     return (-1)*math.log(1-xx)
