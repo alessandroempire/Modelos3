@@ -29,12 +29,10 @@ tiempos_esperados  = []     # Tiempos esperados por cliente
 clientes_atendidos = 0      # Cuenta el total de clientes atendidos
 clientes_declinan  = 0      # Cuenta el total de clientes que declinan
 
-""" Variables para cajeros """
-
 
 def cajero_menor_cola(cajeros):
     """Dado el arreglo de cajeros retorna el cajero con la menor cola"""
-    tamano_cola = 100000
+    tamano_cola = 100000    #un numero muy grande
     numero_cajero = 0
     i = 0
     for temp in cajeros:
@@ -44,22 +42,6 @@ def cajero_menor_cola(cajeros):
         i += 1
 
     return cajeros[numero_cajero]
-
-
-def numero_cajero_menor_cola(cajeros):
-    """Dado el arreglo de cajeros retorna el numero del cajero con
-       la menor cola"""
-
-    tamano_cola = 100000
-    numero_cajero = 0
-    i = 0
-    for temp in cajeros:
-        if len(temp.resource.queue) < tamano_cola:
-            tamano_cola = len(temp.resource.queue)
-            numero_cajero = i
-        i += 1
-
-    return numero_cajero
 
 
 def Declinar(cajeros):
@@ -121,6 +103,7 @@ def cliente(env, nombre_cliente, cajeros):
 
     # Aqui pedimos el recurso de cajeros al enviroment
     cajero_elegido = cajero_menor_cola(cajeros)
+
     with cajero_elegido.resource.request() as req:
         yield req
 
@@ -135,12 +118,11 @@ def cliente(env, nombre_cliente, cajeros):
 
         # Luego generamos en tiempo de atencion por parte del cajero usando la
         # distribucion uniforme
-        tiempo_atencion = random.uniform(
-            TIEMPO_SERVICIO_MIN, TIEMPO_SERVICIO_MAX)
-        yield env.timeout(tiempo_atencion)
+        tiempo_atencion = random.uniform(TIEMPO_SERVICIO_MIN, TIEMPO_SERVICIO_MAX)
 
-        # Se actualiza el tiempo de trabajo para el cajero y se devuelve a la
-        # lista
+        yield env.timeout(tiempo_atencion)
+        # Se actualiza el tiempo de trabajo para el cajero y se devuelve a la lista
+
         cajero_elegido.tiempo_trabajado += tiempo_atencion
 
         # Se actualizan las variables de estado de la simulacion

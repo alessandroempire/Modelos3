@@ -1,9 +1,9 @@
 import random
 import math
 
-maquinas =[1,2,3,4]
+maquinas  = [1,2,3,4]
 repuestos = [5,6,7]
-areparar=[]
+areparar  = []
 
 def media(l):
 	m = t = 0
@@ -78,7 +78,7 @@ def main():
 	print h, "dias"
 	print "La desviacion estandar es "
 	print hh
-	print " El intervalo de confianza es"
+	print "El intervalo de confianza es"
 	print hhh
 
 print('Ejercicio 4 \n')

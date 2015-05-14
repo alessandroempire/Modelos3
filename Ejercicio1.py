@@ -112,6 +112,7 @@ def cliente(env, nombre_cliente, cajeros):
         # la lista antes de salir de la simulacion
         if (env.now + tiempo_atencion >= TIEMPO_SIMULACION):
             cajeros_libres.append(cajero_activo)
+            
         yield env.timeout(tiempo_atencion)
 
         tiempos_esperados.append(espera)
