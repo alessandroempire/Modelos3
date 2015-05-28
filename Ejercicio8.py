@@ -84,5 +84,10 @@ print("Ejercicio 8 \n")
 for i in agentes:
 	autos = ventaSemanal()
 	car   = tipoCarro()
+	#para el numero de carro vendidos
+	# calcular el tipo de carro
+	# y luego a cada carro
+	# calcular comision
 	calculoComision(car, agente(i))
 
+# sumar todo y sacar promedio ;) 
