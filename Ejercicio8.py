@@ -80,14 +80,21 @@ def calculoComision(auto, agente):
 ## Ejecucion principal
 print("Ejercicio 8 \n")
 
-
 for i in agentes:
-	autos = ventaSemanal()
-	car   = tipoCarro()
-	#para el numero de carro vendidos
-	# calcular el tipo de carro
-	# y luego a cada carro
-	# calcular comision
-	calculoComision(car, agente(i))
+	""" Para cada cliente se hace: """
+	numAutos = ventaSemanal()
+	for j in range (0, numAutos):
+		""" Generamos un carro distinto 
+		    Segun el numero de autos vendidos"""
+		typeCar = tipoCarro()
+		calculoComision(typeCar, i )
 
 # sumar todo y sacar promedio ;) 
+
+suma = 0
+
+for i in agentes:
+	suma += i.comision
+
+print('La comision promedio de un vendedor en una semana es: %f'
+	% (suma / len(agentes)))
