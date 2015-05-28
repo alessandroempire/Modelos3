@@ -19,8 +19,6 @@ class Automovil():
 
 """ Variables del programa"""
 RANDOM_SEED       = 42     #El random necesita un seed
-TIEMPO_SIMULACION = 0      # ??
-NUMERO_AGENTES    = 5       
 autos_vendidos    = 0 
 agentes           = [Agente(1), Agente(2), Agente(3), Agente(4), Agente(5)]
 
