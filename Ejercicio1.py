@@ -136,6 +136,7 @@ cajeros = simpy.Resource(env, capacity=NUMERO_CAJEROS)
 
 # Procesamos el generador de clientes y corremos la simulacion
 env.process(generador(env, CLIENTES_MINUTO, cajeros))
+
 env.run(until=TIEMPO_SIMULACION)
 
 # Imprimimo datos 
