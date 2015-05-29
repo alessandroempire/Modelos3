@@ -35,7 +35,6 @@ cajeros_libres = [Cajero(1), Cajero(2), Cajero(3), Cajero(4)]
 
 
 def Declinar():
-    """Determinar si el ciente declina o no"""
     global clientes_encolados
 
     aleatorio = random.randint(0, 100)
@@ -60,23 +59,20 @@ def generador(env, clientes_minuto, cajeros):
 
     while True:
         # Se crea un nuevo cliente y se procesa
-        c = cliente(env, ('Cliente %02d' % cliente_actual), cajeros)
-        env.process(c)
+        env.process(cliente(env, ('Cliente %02d' % cliente_actual), cajeros))
 
         # Se saca un numero aleatorio siguiendo una distribucion exponencial
         t = random.expovariate(1.0 / clientes_minuto)
 
-        # Esperamos t minutos para introducir el cliente c al sistema
+        # Esperamos t para introducir un nuevo cliente. 
         yield env.timeout(t)
 
-        # Se actualizan las variables de estado de la simulacion
+        # Actualizar variables
         total_clientes += 1
         cliente_actual += 1
 
 
 def cliente(env, nombre_cliente, cajeros):
-    """El cliente llegara al banco, si se queda esperar su turno y
-       luego de ser atendido se ira"""
 
     global cajeros_libres, clientes_encolados, clientes_atendidos
     global clientes_declinan, tiempos_esperados, TIEMPO_SERVICIO_MIN
@@ -85,60 +81,59 @@ def cliente(env, nombre_cliente, cajeros):
     # Se guarda el tiempo de llegada
     llegada = env.now
 
-    # Se chequea si el cliente declinara dado el estado de la cola
+    # Revisamos el el cliente se queda o no. 
     if Declinar():
         clientes_declinan += 1
         return
     else:
         clientes_encolados += 1
 
-    # Aqui pedimos el recurso de cajeros al enviroment
+    # Pedir recursos de cajero
     with cajeros.request() as req:
         yield req
 
-        # Una vez que tenemos un cajero lo sacamos de la pila de cajeros libres
+        # Obtener algun cajero libre
         cajero_activo = cajeros_libres.pop(0)
 
-        # Luego guardamos el tiempo de espera de cliente y lo agregamos a la
-        # lista de tiempos esperados
+        # Calcular cuanto espero por el cajero
         espera = env.now - llegada
+
+        # Agregamos cuanto espero el cliente 
+        tiempos_esperados.append(espera)
         
-        # Luego generamos en tiempo de atencion por parte del cajero usando la
-        # distribucion uniforme
+        # Tiempo que tarda en atender.
         tiempo_atencion = random.uniform(TIEMPO_SERVICIO_MIN, TIEMPO_SERVICIO_MAX)
 
-        # Es importante revisar si el tiempo de atencion tomara mas que el
-        # tiempo restante de simulacion de forma que el cajero sea devuelto a
-        # la lista antes de salir de la simulacion
+        # Revisar si la simulacion termino o no para agregarlo a la lista de
+        # cajeros libres
         if (env.now + tiempo_atencion >= TIEMPO_SIMULACION):
             cajeros_libres.append(cajero_activo)
             
         yield env.timeout(tiempo_atencion)
 
-        tiempos_esperados.append(espera)
-
-        # Se actualiza el tiempo de trabajo para el cajero y se devuelve a la lista
+        # Actualizamos tiempo de cajero y agregamos a libres
         cajero_activo.tiempo_trabajado += tiempo_atencion
         cajeros_libres.append(cajero_activo)
 
-        # Se actualizan las variables de estado de la simulacion
+        # Actualizamos variables
         clientes_encolados -= 1
         clientes_atendidos += 1
 
 
+#####################################################################
 """ El programa Main """
 print('Ejercicio 01 \n')
 
+#####################################################################
 env = simpy.Environment()
 
-# Declaramos un nuevo recursos que representa los N cajeros
 cajeros = simpy.Resource(env, capacity=NUMERO_CAJEROS)
 
-# Procesamos el generador de clientes y corremos la simulacion
 env.process(generador(env, CLIENTES_MINUTO, cajeros))
 
 env.run(until=TIEMPO_SIMULACION)
 
+#####################################################################
 # Imprimimo datos 
 print('a) El tiempo de espera promedio fue: %f'
       % (sum(tiempos_esperados) / len(tiempos_esperados)))
