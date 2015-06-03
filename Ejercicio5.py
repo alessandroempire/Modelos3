@@ -3,24 +3,20 @@ import simpy
 from operator import attrgetter
 
 """ Constantes de programa """
-RANDOM_SEED       = 42      # La libreria de random requiere un seed
+RANDOM_SEED       = 42      # 
 TIEMPO_SIMULACION = 365    	# La simulacion dura 30 dias
 
 NUMERO_TERMINALES = 2 		# Existen N terminales en el puerto
 
 tiempos_esperados = []
 
-# COMO MODELAR LOS TIPOS DE BUQUE? UNA CLASE PARA CADA TIPO?
 
-
-""" Clases de ayuda """
 class Puerto():
-
     def __init__(self, env, numero_terminales):
         self.resource = simpy.Resource(env, capacity=2)
-        self.terminales = []
-        for i in range(numero_terminales):
-            self.terminales.append(Terminal(chr(i + ord('A'))))
+        self.terminales = ['A', 'B']
+        #for i in range(numero_terminales):
+        #    self.terminales.append(Terminal(chr(i + ord('A'))))
 
     def get_terminal(self):
         return self.terminales.pop(0)
@@ -34,15 +30,14 @@ class Puerto():
             total += terminal.calcular_buques_servidos()
         return total
 
-
-"""Clase para representar instancias de una terminal de puerto"""
+"""Clase que representa un terminal"""
 class Terminal():
     def __init__(self, nombre):
         self.nombre = nombre
         self.buques_G_servidos = 0
         self.buques_M_servidos = 0
         self.buques_P_servidos = 0
-        self.tiempo_trabajado = 0
+        self.tiempo_trabajado  = 0
 
     def calcular_tiempo_buque(self, tipo_buque):
         tiempo_trabajado = 0
@@ -77,4 +72,63 @@ class Terminal():
     def calcular_buques_servidos(self):
         return self.buques_G_servidos + self.buques_M_servidos + \
             self.buques_P_servidos
+
+def tiempo_llegada():
+    dias = 0 
+    rand = random.randint(0, 100)
+
+    if 0 <= rand <= 20:
+        dias = 1
+    elif 20 < rand <= 45:
+        dias = 2
+    elif 45 < rand <= 80:
+        dias = 3 
+    elif 80 < rand <= 95:
+        dias = 4
+    elif 95 < rand <= 100:
+        dias = 5
+
+    return dias
+
+def tipo_buque():
+    buque = ''
+    rand = random.randint(0,100)
+
+    if 0 <= rand <= 40:
+        buque = 'G'
+    elif 40 < rand <= 75:
+        buque = 'M'
+    elif 75 < rand <= 100:
+        buque = 'P'
+
+    return buque
+
+def generator(env, puerto):
+    contador_buques = 0 
+    
+    while True:
+        type_buque = tipo_buque()
+        dias       = tiempo_llegada()
+
+        env.process(buque(env, ('Buque %02d' % contador_buques), 
+                    type_buque, puerto))
+
+        yield env.timeout(dias)
+
+        contador_buques += 1
+
+def buque(env, nombre_buque, tipo_buque, puerto):
+    global tiempos_esperados
+    
+    llegada = env.now
+
+
+
+
+
+###############################################################################
+
+print('Ejercicio 5 \n')
+
+env = simpy.Environment()
 
