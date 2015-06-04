@@ -15,24 +15,24 @@ class Cajero():
 
 """ Constantes de programa """
 RANDOM_SEED       = 42      # La libreria de random requiere un seed
-TIEMPO_SIMULACION = 120     # La simulacion dura 120 minutos
+TIEMPO_SIMULACION = 480     # La simulacion dura 480 minutos
 
-NUMERO_CAJEROS      = 4     # Existen cuatro cajeros en el banco
+NUMERO_CAJEROS      = 4     # Hay cuatro cajeros en el banco
 CLIENTES_MINUTO     = 1     # Se genera un cliente nuevo por minuto
-TIEMPO_SERVICIO_MIN = 3     # El minimo tiempo de servicio es tres minutos
-TIEMPO_SERVICIO_MAX = 5     # El maximo tiempo de servicio es cinco minutos
+TIEMPO_SERVICIO_MIN = 3     # Tiempo de servicio minimo es tres minutos
+TIEMPO_SERVICIO_MAX = 5     # Tiempo de servicio maximo es cinco minutos
 
 
 """ Variables para clientes """
-total_clientes     = 0      # Cuenta total de clientes que recibe la simulacion
-tiempos_esperados  = []     # Tiempos esperados por cliente
-clientes_atendidos = 0      # Cuenta el total de clientes atendidos
-clientes_declinan  = 0      # Cuenta el total de clientes que declinan
+total_clientes     = 0      # Total de clientes que recibe la simulacion
+tiempos_esperados  = []     # Tiempos esperados por cada cliente
+clientes_atendidos = 0      # Total de clientes atendidos
+clientes_declinan  = 0      # Total de clientes que declinan
 
 
 def cajero_menor_cola(cajeros):
-    """Dado el arreglo de cajeros retorna el cajero con la menor cola"""
-    tamano_cola = 100000    #un numero muy grande
+    """Retornar el cajero con la menor cola"""
+    tamano_cola = 100000    #N muy grande
     numero_cajero = 0
     i = 0
     for temp in cajeros:
@@ -71,17 +71,16 @@ def generador(env, clientes_minuto, cajeros):
     cliente_actual = 1
 
     while True:
-        # Se crea un nuevo cliente y se procesa
-        c = cliente(env, ('Cliente %02d' % cliente_actual), cajeros)
-        env.process(c)
+        # Se crea un nuevo cliente y 
+        env.process(cliente(env, ('Cliente %02d' % cliente_actual), cajeros))
 
-        # Se saca un numero aleatorio siguiendo una distribucion exponencial
+        # Random de Dist exponencial
         t = random.expovariate(1.0 / clientes_minuto)
 
-        # Esperamos t minutos para introducir el cliente c al sistema
+        # Esperar tiempo t para insertar proximo cliente
         yield env.timeout(t)
 
-        # Se actualizan las variables de estado de la simulacion
+        # Actualizar variables
         total_clientes += 1
         cliente_actual += 1
 
@@ -93,21 +92,22 @@ def cliente(env, nombre_cliente, cajeros):
     global clientes_declinan, tiempos_esperados, TIEMPO_SERVICIO_MIN
     global TIEMPO_SERVICIO_MAX, TIEMPO_SIMULACION
 
-    # Se guarda el tiempo de llegada
+    # Tiempo de llegada
     llegada = env.now
 
-    # Se chequea si el cliente declinara dado el estado de la cola
+    # Chequear si se declina
     if Declinar(cajeros):
         clientes_declinan += 1
         return
 
-    # Aqui pedimos el recurso de cajeros al enviroment
+    # Escogemos el cajero de menor cola
     cajero_elegido = cajero_menor_cola(cajeros)
 
+    # Se pide a ese cajero el recurso (simula una cola!)
     with cajero_elegido.resource.request() as req:
         yield req
 
-        # Chequeamos que no haya pasado el tiempo de la simulacion
+        # Revisar que el tiempo de la simulacion no haya terminado
         if env.now >= TIEMPO_SIMULACION:
             return
 
@@ -116,8 +116,7 @@ def cliente(env, nombre_cliente, cajeros):
         espera = env.now - llegada
         tiempos_esperados.append(espera)
 
-        # Luego generamos en tiempo de atencion por parte del cajero usando la
-        # distribucion uniforme
+        # Tiempo de atencion distribucion uniforme
         tiempo_atencion = random.uniform(TIEMPO_SERVICIO_MIN, TIEMPO_SERVICIO_MAX)
 
         yield env.timeout(tiempo_atencion)
@@ -125,7 +124,7 @@ def cliente(env, nombre_cliente, cajeros):
 
         cajero_elegido.tiempo_trabajado += tiempo_atencion
 
-        # Se actualizan las variables de estado de la simulacion
+        # Se actualizan las variables
         clientes_atendidos += 1
 
 
