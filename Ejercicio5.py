@@ -77,7 +77,7 @@ class Terminal():
             self.buques_P_servidos
 
 def tiempo_llegada():
-    dias = 0 
+    dias = 1
     rand = random.randint(0, 100)
 
     if 0 <= rand <= 20:
@@ -127,12 +127,16 @@ def buque(env, nombre_buque, tipo_buque, puerto):
     global tiempos_esperados
     
     llegada = env.now
+    #print ('llegada %f' % llegada)
 
     with puerto.resource.request() as req:
         yield req
 
         #regitramos la espera
         espera = env.now - llegada
+        #print ('now %f' % env.now)
+        #print ('llegada %f' % llegada)
+        #print ('espera %f' % espera)
         tiempos_esperados.append(espera)
 
         terminal = puerto.get_terminal()
@@ -159,6 +163,8 @@ env.run(until=TIEMPO_SIMULACION)
 
 
 # Por ultimo se imprimen los datos pertinentes
+print ('d %f' % tiempos_esperados[0])
+
 print('a) El tiempo de espera promedio fue: %f'
       % (sum(tiempos_esperados) / len(tiempos_esperados)))
 
