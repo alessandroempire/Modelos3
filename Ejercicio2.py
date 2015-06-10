@@ -128,6 +128,36 @@ def cliente(env, nombre_cliente, cajeros):
         clientes_atendidos += 1
 
 
+def media(l):
+    m = t = 0
+    tam = len(l)
+    # Calculo de la media
+    for i in l:
+        m += i
+
+    media = m / tam
+    return media
+
+def desv(l):
+    m = media(l)
+    t = 0
+    tam = len(l)
+    for i in l:
+        t += math.pow((i - m), 2)
+
+    varianza = t / (tam -1)
+    desv = math.sqrt(varianza)  
+    return desv
+
+def intervalo(l):
+    m = media(l)
+    d = desv(l)
+    tam = len(l)
+    inf = m - (1.96 * (d / math.sqrt(tam)))
+    sup = m + (1.96 * (d / math.sqrt(tam)))
+    inter = [inf, sup]
+    return inter
+###############################################################################
 # Preparamos y comenzamos la simulacion
 print('Ejercicio 02 \n')
 

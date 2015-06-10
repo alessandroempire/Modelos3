@@ -1,9 +1,16 @@
 import random
 import math
+import simpy
 
+""" Variables del problema"""
 maquinas  = [1,2,3,4]
 repuestos = [5,6,7]
 areparar  = []
+
+""" Constantes de ayuda"""
+SIM_TIME = 500
+semaforo = True
+time     = 0
 
 def media(l):
 	m = t = 0
@@ -41,49 +48,69 @@ def gReparar():
  
 #Tiempo que tarda una pieza funcionando hasta danarse.
 def gFuncionandoDano():
-    xx=random.uniform(0,1)
-    return (-1)*math.log(1-xx)
+    y=random.uniform(0,1)
+    return (-1)*math.log(1-y)
     
-def main():
-	
-	n = 5 # Numero de simulaciones
-	t1=[]
-	for i in range (0,n):
-		danado= gFuncionandoDano()
-		tr=0
-		for k in range (0,15):
-			
-			if danado <= 0: 
-				
-				danado = gFuncionandoDano()   
-				areparar.append(maquinas.pop(0))
-				if (len(repuestos)>0):
-					maquinas.append(repuestos.pop(0))
-				else:
-					break
+def generator(env, reparador, maquinas, repuestos, areparar):
+	global time, semaforo
 
-			else: 
-				danado -= 1
-				
-			tr -=1
-			if tr<=0 :
-				if len(areparar)>0 :
-				   repuestos.append(areparar.pop(0))
-				   tr= gReparar()
-		t1.append(k)
-	h= media(t1)
-	hh=desv(t1)
-	hhh= intervalo(t1)
-	print "La media fue"
-	print h, "dias"
-	print "La desviacion estandar es "
-	print hh
-	print "El intervalo de confianza es"
-	print hhh
+	while True:
+		if semaforo :
+			# lo que tarda en danarse!
+			t = gFuncionandoDano()
 
+			yield env.timeout(t)
+
+			# saco la maquina se se dano y la ponga en la
+			# la lista de reparar
+			m = maquinas.pop()
+			areparar.append(m)
+
+			# saco una de repuesto y la pongo a funcionar
+			mr = repuestos.pop()
+			maquinas.append(mr)
+
+			#mando a reparar la maquina danada!
+			env.process(reparando(env, reparador, repuestos, 
+				                  areparar))
+
+			#si no hay mas repuesto se acabo la simulacion
+			if (len(repuestos) == 0):
+				semaforo = False
+				time = env.now
+
+		else: 
+			#forzar que acabe la simulacion
+			fin = env.now
+			yield env.timeout(SIM_TIME - fin)
+			continue
+
+def reparando(env, reparador, repuestos, areparar):
+	# Solo un tipo a la vez repara
+	with reparador.request() as req:
+		yield req
+
+		#tiempo de reparar
+		t = gReparar()
+
+		yield env.timeout(t)
+
+		#saco una maquina de las que se esta reparando
+		# y las coloco com repuesto
+		m = areparar.pop()
+		repuestos.append(m)
+
+
+############################################################
 print('Ejercicio 4 \n')
-main()
 
-    
+env = simpy.Environment()
 
-     
+reparador = simpy.Resource(env, capacity=1)
+
+env.process(generator(env, reparador, maquinas, 
+	                  repuestos, areparar))
+
+env.run(until=SIM_TIME)
+
+print("Tiempo de simulacion %f" %time)
