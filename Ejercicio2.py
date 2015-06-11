@@ -1,5 +1,6 @@
 import random
 import simpy
+import math
 from operator import attrgetter
 
 """ Clase representante de un cajero """
@@ -29,6 +30,11 @@ tiempos_esperados  = []     # Tiempos esperados por cada cliente
 clientes_atendidos = 0      # Total de clientes atendidos
 clientes_declinan  = 0      # Total de clientes que declinan
 
+""" VAraibles para las n-esimas simulacinoes"""
+SIMULATION            = 10000 
+TOTAL_TIEMPO_PROMEDIO = []
+TOTAL_DECLINADOS      = []
+TOTAL_DESOCUPADOS     = []
 
 def cajero_menor_cola(cajeros):
     """Retornar el cajero con la menor cola"""
@@ -127,7 +133,6 @@ def cliente(env, nombre_cliente, cajeros):
         # Se actualizan las variables
         clientes_atendidos += 1
 
-
 def media(l):
     m = t = 0
     tam = len(l)
@@ -157,26 +162,77 @@ def intervalo(l):
     sup = m + (1.96 * (d / math.sqrt(tam)))
     inter = [inf, sup]
     return inter
+
 ###############################################################################
 # Preparamos y comenzamos la simulacion
 print('Ejercicio 02 \n')
 
-env = simpy.Environment()
+for x in range (0,100):
+    #resert de las variables
 
-# Declaramos un nuevo recursos que representa los N cajeros
-# Esta cola mantendra los cajeros libres a lo largo de la ejecucion
-cajeros = [Cajero(1, env), Cajero(2, env), Cajero(3, env), Cajero(4, env)]
+    total_clientes     = 0  
+    tiempos_esperados  = []     
+    clientes_atendidos = 0      
+    clientes_declinan  = 0      
 
-# Procesamos el generador de clientes y corremos la simulacion
-env.process(generador(env, CLIENTES_MINUTO, cajeros))
-env.run(until=TIEMPO_SIMULACION)
+    #Simulacion
+    env = simpy.Environment()
 
-print('a) El tiempo de espera promedio fue: %f'
-      % (sum(tiempos_esperados) / len(tiempos_esperados)))
-print('b) El porcentaje de clientes que declinaron es: %.0f%%'
-      % (clientes_declinan * 100 / total_clientes))
-print('c)')
-for cajero in cajeros:
-    print('   El porcentaje de tiempo desocupado de el %s fue: %.0f%%' %
-          (cajero.nombre,
-           100 - (cajero.tiempo_trabajado * 100 / TIEMPO_SIMULACION)))
+    # Declaramos un nuevo recursos que representa los N cajeros
+    # Esta cola mantendra los cajeros libres a lo largo de la ejecucion
+    cajeros = [Cajero(1, env), Cajero(2, env), Cajero(3, env), Cajero(4, env)]
+
+    # Procesamos el generador de clientes y corremos la simulacion
+    env.process(generador(env, CLIENTES_MINUTO, cajeros))
+    env.run(until=TIEMPO_SIMULACION)
+
+    #Imprimir datos
+    # Solo 5 primeros
+    if (0 <= x <= 5):
+        print('a) El tiempo de espera promedio fue: %f'
+              % (sum(tiempos_esperados) / len(tiempos_esperados)))
+        print('b) El porcentaje de clientes que declinaron es: %.0f%%'
+              % (clientes_declinan * 100 / total_clientes))
+        print('c)')
+
+        for cajero in cajeros:
+            print('   El porcentaje de tiempo desocupado de el %s fue: %.0f%%' %
+                  (cajero.nombre,
+                   100 - (cajero.tiempo_trabajado * 100 / TIEMPO_SIMULACION)))
+
+    #agregar a los arreglos
+    TOTAL_TIEMPO_PROMEDIO.append((sum(tiempos_esperados) / len(tiempos_esperados)))
+    TOTAL_DECLINADOS.append((clientes_declinan * 100 / total_clientes))
+
+#Estadisticas
+print('ESTADISTICAS \n\n')
+
+mean  = media(TOTAL_TIEMPO_PROMEDIO)
+mean1 = media(TOTAL_DECLINADOS)
+# mean1      = media(TOTAL_DECLINADOS)
+
+print "La media del total de tiempo promedio fue"
+print mean, "minutos"
+print ('\n')
+print "La media del total de cliente declinados fue"
+print mean1, "personas"
+
+##########
+desviation  = desv(TOTAL_TIEMPO_PROMEDIO)
+desviation1 = desv(TOTAL_DECLINADOS)
+print ('\n')
+print "La desviacion del total de tiempo promedio fue"
+print desviation, "minutos"
+print ('\n')
+print "La desviacion del total de cliente declinados fue"
+print desviation1, "personas"
+print ('\n')
+#############
+interval   = intervalo(TOTAL_TIEMPO_PROMEDIO)
+interval1  = intervalo(TOTAL_DECLINADOS)
+
+print "El intervalo de confianza del total de tiempo promedio fue"
+print interval, "minutos"
+print ('\n')
+print "El intervalo de confianza del total de cliente declinados fue"
+print interval1, "personas"

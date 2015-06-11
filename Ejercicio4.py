@@ -12,6 +12,9 @@ SIM_TIME = 500
 semaforo = True
 time     = 0
 
+""" Var para simulacion"""
+TOTAL_TIEMPOS = []
+
 def media(l):
 	m = t = 0
 	tam = len(l)
@@ -83,7 +86,7 @@ def generator(env, reparador, maquinas, repuestos, areparar):
 			#forzar que acabe la simulacion
 			fin = env.now
 			yield env.timeout(SIM_TIME - fin)
-			continue
+			break
 
 def reparando(env, reparador, repuestos, areparar):
 	# Solo un tipo a la vez repara
@@ -104,13 +107,50 @@ def reparando(env, reparador, repuestos, areparar):
 ############################################################
 print('Ejercicio 4 \n')
 
-env = simpy.Environment()
+for x in range (0,100):
+	#reset de la variables globales
+	maquinas  = [1,2,3,4]
+	repuestos = [5,6,7]
+	areparar  = []
+	semaforo = True
+	time     = 0
 
-reparador = simpy.Resource(env, capacity=1)
+	env = simpy.Environment()
 
-env.process(generator(env, reparador, maquinas, 
-	                  repuestos, areparar))
+	reparador = simpy.Resource(env, capacity=1)
 
-env.run(until=SIM_TIME)
+	env.process(generator(env, reparador, maquinas, 
+		                  repuestos, areparar))
 
-print("Tiempo de simulacion %f" %time)
+	env.run(until=SIM_TIME)
+
+	print("Tiempo de simulacion %f" %time)
+
+	TOTAL_TIEMPOS.append(time)
+
+#####################
+#Estadisticas
+print('ESTADISTICAS \n\n')
+
+
+mean  = media(TOTAL_TIEMPOS)
+# mean1      = media(TOTAL_DECLINADOS)
+
+print "La media del total de tiempo promedio fue"
+print mean, "minutos"
+print ('\n')
+
+##########
+desviation  = desv(TOTAL_TIEMPOS)
+print ('\n')
+
+print "La desviacion del total de tiempo promedio fue"
+print desviation, "minutos"
+
+print ('\n')
+
+#############
+interval   = intervalo(TOTAL_TIEMPOS)
+
+print "El intervalo de confianza del total de tiempo promedio fue"
+print interval, "minutos"

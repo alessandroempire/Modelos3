@@ -1,6 +1,7 @@
 
 import random
 import simpy
+import math
 from operator import attrgetter
 
 """ Clase que representa un cajero """
@@ -33,6 +34,11 @@ clientes_declinan  = 0      # Cuenta el total de clientes que declinan
 # Cola que tiene los cajeros libres
 cajeros_libres = [Cajero(1), Cajero(2), Cajero(3), Cajero(4)]
 
+""" VAraibles para las n-esimas simulacinoes"""
+SIMULATION            = 10000 
+TOTAL_TIEMPO_PROMEDIO = []
+TOTAL_DECLINADOS      = []
+TOTAL_DESOCUPADOS     = []
 
 def Declinar():
     global clientes_encolados
@@ -154,26 +160,77 @@ def intervalo(l):
 """ El programa Main """
 print('Ejercicio 01 \n')
 
+for x in range(0, 100):
+    #Reset de la variables
+    total_clientes     = 0      # Cuenta total de clientes que recibe la simulacion
+    tiempos_esperados  = []     # Tiempos esperados por cliente
+    clientes_encolados = 0      # Cuenta el total de clientes en cola
+    clientes_atendidos = 0      # Cuenta el total de clientes atendidos
+    clientes_declinan  = 0      # Cuenta el total de clientes que declinan
+    cajeros_libres = [Cajero(1), Cajero(2), Cajero(3), Cajero(4)]
 
-env = simpy.Environment()
+    #Simulacion como tal
 
-cajeros = simpy.Resource(env, capacity=NUMERO_CAJEROS)
+    env = simpy.Environment()
 
-env.process(generador(env, CLIENTES_MINUTO, cajeros))
+    cajeros = simpy.Resource(env, capacity=NUMERO_CAJEROS)
 
-env.run(until=TIEMPO_SIMULACION)
+    env.process(generador(env, CLIENTES_MINUTO, cajeros))
 
-#####################################################################
-# Imprimimo datos 
-print('a) El tiempo de espera promedio fue: %f'
-      % (sum(tiempos_esperados) / len(tiempos_esperados)))
-print('b) El porcentaje de clientes que declinaron es: %.0f%%'
-      % (clientes_declinan * 100 / total_clientes))
-print('c)')
+    env.run(until=TIEMPO_SIMULACION)
 
-# Se ordena la lista de cajeros por razones esteticas
-cajeros_libres.sort(key=attrgetter('numero'), reverse=False)
-for cajero in cajeros_libres:
-    print('   El porcentaje de tiempo desocupado de el %s fue: %.0f%%' %
-          (cajero.nombre,
-           100 - (cajero.tiempo_trabajado * 100 / TIEMPO_SIMULACION)))
+    # Imprimimo datos 
+    # vamos a imprimir solo 5
+    if (0 <= x <= 5):
+        print('a) El tiempo de espera promedio fue: %f'
+              % (sum(tiempos_esperados) / len(tiempos_esperados)))
+        print('b) El porcentaje de clientes que declinaron es: %.0f%%'
+              % (clientes_declinan * 100 / total_clientes))
+        print('c)')
+
+        # Se ordena la lista de cajeros por razones esteticas
+        cajeros_libres.sort(key=attrgetter('numero'), reverse=False)
+        for cajero in cajeros_libres:
+            print('   El porcentaje de tiempo desocupado de el %s fue: %.0f%%' %
+                  (cajero.nombre,
+                   100 - (cajero.tiempo_trabajado * 100 / TIEMPO_SIMULACION)))
+
+    # agregar a los arreglos!
+    TOTAL_TIEMPO_PROMEDIO.append((sum(tiempos_esperados) / len(tiempos_esperados)))
+    TOTAL_DECLINADOS.append((clientes_declinan * 100 / total_clientes))
+    #TOTAL_DESOCUPADOS.append()
+
+######################
+#Estadisticas
+print('ESTADISTICAS \n\n')
+
+
+mean  = media(TOTAL_TIEMPO_PROMEDIO)
+mean1 = media(TOTAL_DECLINADOS)
+# mean1      = media(TOTAL_DECLINADOS)
+
+print "La media del total de tiempo promedio fue"
+print mean, "minutos"
+print ('\n')
+print "La media del total de cliente declinados fue"
+print mean1, "personas"
+
+##########
+desviation  = desv(TOTAL_TIEMPO_PROMEDIO)
+desviation1 = desv(TOTAL_DECLINADOS)
+print ('\n')
+print "La desviacion del total de tiempo promedio fue"
+print desviation, "minutos"
+print ('\n')
+print "La desviacion del total de cliente declinados fue"
+print desviation1, "personas"
+print ('\n')
+#############
+interval   = intervalo(TOTAL_TIEMPO_PROMEDIO)
+interval1  = intervalo(TOTAL_DECLINADOS)
+
+print "El intervalo de confianza del total de tiempo promedio fue"
+print interval, "minutos"
+print ('\n')
+print "El intervalo de confianza del total de cliente declinados fue"
+print interval1, "personas"
