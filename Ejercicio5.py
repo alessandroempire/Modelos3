@@ -1,21 +1,19 @@
 import random
 import simpy
+import math
 from operator import attrgetter
 
 """ Constantes de programa """
 RANDOM_SEED       = 42      
-TIEMPO_SIMULACION = 365    	# un a~o de simulacion
+TIEMPO_SIMULACION = 30    	# un a~o de simulacion
 
 NUMERO_TERMINALES = 2 		# Existen N terminales en el puerto
 
 tiempos_esperados = []
 
-
 class Puerto():
     def __init__(self, env, numero_terminales):
-        self.resource = simpy.Resource(env, 
-                                       capacity=numero_terminales)
-        #self.terminales = ['A', 'B']
+        self.resource = simpy.Resource(env, capacity=numero_terminales)
         self.terminales = []
         for i in range(numero_terminales):
             self.terminales.append(Terminal(chr(i + ord('A'))))
@@ -44,6 +42,7 @@ class Terminal():
 
     def calcular_tiempo_buque(self, tipo_buque):
         tiempo_trabajado = 0
+
         if self.nombre == 'A':
             if tipo_buque == 'G':
                 tiempo_trabajado = 4
@@ -57,6 +56,7 @@ class Terminal():
                 tiempo_trabajado = 2
                 self.tiempo_trabajado += 2
                 self.buques_P_servidos += 1
+
         elif self.nombre == 'B':
             if tipo_buque == 'G':
                 tiempo_trabajado = 3
@@ -70,6 +70,7 @@ class Terminal():
                 tiempo_trabajado = 1
                 self.tiempo_trabajado += 1
                 self.buques_P_servidos += 1
+
         return tiempo_trabajado
 
     def calcular_buques_servidos(self):
@@ -94,7 +95,7 @@ def tiempo_llegada():
     return dias
 
 def tipo_buque():
-    buque = ''
+    buque = 'G'
     rand = random.randint(0,100)
 
     if 0 <= rand <= 40:
@@ -106,47 +107,55 @@ def tipo_buque():
 
     return buque
 
-#Estoy asumiendo que solo puedo atender un buque a la vez!
+
 def generator(env, puerto):
     contador_buques = 0 
+    print ('init')
     
     while True:
         type_buque = tipo_buque()
-        dias       = tiempo_llegada() #dias que tarda en llegar
+        print('tipo %s' %type_buque)
+        dias       = tiempo_llegada()  #dias que tarda en llegar
+        print('dias1 %f' %dias)
 
-        yield env.timeout(dias) #muevo el tiempo unidad: dias        
+        yield env.timeout(dias) 
 
         env.process(buque(env, ('Buque %02d' % contador_buques), 
-                    type_buque, puerto))        
+                          type_buque, puerto) )        
 
         #yield env.timeout(dias) #muevo el tiempo unidad: dias
 
         contador_buques += 1
+        print('next buque')
 
 def buque(env, nombre_buque, tipo_buque, puerto):
     global tiempos_esperados
     
     llegada = env.now
-    #print ('llegada %f' % llegada)
+    print ('esperando! %f' % llegada)
 
     with puerto.resource.request() as req:
         yield req
 
         #regitramos la espera
         espera = env.now - llegada
-        #print ('now %f' % env.now)
+        print ('entrando %f' % env.now)
         #print ('llegada %f' % llegada)
         #print ('espera %f' % espera)
         tiempos_esperados.append(espera)
 
         terminal = puerto.get_terminal()
+
         tiempo_work = terminal.calcular_tiempo_buque(tipo_buque)
+        print('tiempo word %f' %tiempo_work)
 
         #volvemos insertar terminal
         puerto.add_terminal(terminal)
 
         #hace el trabajo 
         yield env.timeout(tiempo_work)
+
+        print ('saliendo %f' % env.now)
 
 
 ###############################################################################
@@ -157,13 +166,15 @@ env = simpy.Environment()
 
 puerto = Puerto(env, NUMERO_TERMINALES)
 
+#print( len(puerto.terminales) )
+
 env.process(generator(env, puerto))
 
 env.run(until=TIEMPO_SIMULACION)
 
 
 # Por ultimo se imprimen los datos pertinentes
-print ('d %f' % tiempos_esperados[0])
+#print ('d %f' % tiempos_esperados[0])
 
 print('a) El tiempo de espera promedio fue: %f'
       % (sum(tiempos_esperados) / len(tiempos_esperados)))
