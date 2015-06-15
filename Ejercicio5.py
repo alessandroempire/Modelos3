@@ -8,6 +8,7 @@ RANDOM_SEED       = 42
 TIEMPO_SIMULACION = 30    	# un a~o de simulacion
 
 NUMERO_TERMINALES = 2 		# Existen N terminales en el puerto
+EXTRA = 5
 
 tiempos_esperados = []
 
@@ -40,36 +41,44 @@ class Terminal():
         self.buques_P_servidos = 0
         self.tiempo_trabajado  = 0
 
+    def overflow(self, time):
+        self.tiempo_trabajado -= time
+
     def calcular_tiempo_buque(self, tipo_buque):
         tiempo_trabajado = 0
 
         if self.nombre == 'A':
             if tipo_buque == 'G':
-                tiempo_trabajado = 4
-                self.tiempo_trabajado += 4
+                tiempo_trabajado = 4 + EXTRA
+                self.tiempo_trabajado += 4 + EXTRA
                 self.buques_G_servidos += 1
+                return tiempo_trabajado
             elif tipo_buque == 'M':
-                tiempo_trabajado = 3
-                self.tiempo_trabajado += 3
+                tiempo_trabajado = 3 + EXTRA
+                self.tiempo_trabajado += 3 + EXTRA
                 self.buques_M_servidos += 1
+                return tiempo_trabajado
             elif tipo_buque == 'P':
-                tiempo_trabajado = 2
-                self.tiempo_trabajado += 2
+                tiempo_trabajado = 2 + EXTRA
+                self.tiempo_trabajado += 2 + EXTRA
                 self.buques_P_servidos += 1
-
+                return tiempo_trabajado
         elif self.nombre == 'B':
             if tipo_buque == 'G':
-                tiempo_trabajado = 3
-                self.tiempo_trabajado += 3
+                tiempo_trabajado = 3 + EXTRA
+                self.tiempo_trabajado += 3 + EXTRA
                 self.buques_G_servidos += 1
+                return tiempo_trabajado
             elif tipo_buque == 'M':
-                tiempo_trabajado = 2
-                self.tiempo_trabajado += 2
+                tiempo_trabajado = 2 + EXTRA
+                self.tiempo_trabajado += 2 + EXTRA
                 self.buques_M_servidos += 1
+                return tiempo_trabajado
             elif tipo_buque == 'P':
-                tiempo_trabajado = 1
-                self.tiempo_trabajado += 1
+                tiempo_trabajado = 1 + EXTRA
+                self.tiempo_trabajado += 1 + EXTRA
                 self.buques_P_servidos += 1
+                return tiempo_trabajado
 
         return tiempo_trabajado
 
@@ -114,9 +123,9 @@ def generator(env, puerto):
     
     while True:
         type_buque = tipo_buque()
-        print('tipo %s' %type_buque)
+        #print('tipo %s' %type_buque)
         dias       = tiempo_llegada()  #dias que tarda en llegar
-        print('dias1 %f' %dias)
+        #print('dias1 %f' %dias)
 
         yield env.timeout(dias) 
 
@@ -126,7 +135,7 @@ def generator(env, puerto):
         #yield env.timeout(dias) #muevo el tiempo unidad: dias
 
         contador_buques += 1
-        print('next buque')
+        #print('next buque')
 
 def buque(env, nombre_buque, tipo_buque, puerto):
     global tiempos_esperados
@@ -149,6 +158,10 @@ def buque(env, nombre_buque, tipo_buque, puerto):
         tiempo_work = terminal.calcular_tiempo_buque(tipo_buque)
         print('tiempo word %f' %tiempo_work)
 
+        if (env.now + tiempo_work >= TIEMPO_SIMULACION):
+            # si me paso no debo considerar el tiempo
+            terminal.overflow(tiempo_work) 
+
         #volvemos insertar terminal
         puerto.add_terminal(terminal)
 
@@ -157,6 +170,35 @@ def buque(env, nombre_buque, tipo_buque, puerto):
 
         print ('saliendo %f' % env.now)
 
+def media(l):
+    m = t = 0
+    tam = len(l)
+    # Calculo de la media
+    for i in l:
+        m += i
+
+    media = m / tam
+    return media
+
+def desv(l):
+    m = media(l)
+    t = 0
+    tam = len(l)
+    for i in l:
+        t += math.pow((i - m), 2)
+
+    varianza = t / (tam -1)
+    desv = math.sqrt(varianza)  
+    return desv
+
+def intervalo(l):
+    m = media(l)
+    d = desv(l)
+    tam = len(l)
+    inf = m - (1.96 * (d / math.sqrt(tam)))
+    sup = m + (1.96 * (d / math.sqrt(tam)))
+    inter = [inf, sup]
+    return inter
 
 ###############################################################################
 
@@ -174,9 +216,8 @@ env.run(until=TIEMPO_SIMULACION)
 
 
 # Por ultimo se imprimen los datos pertinentes
-#print ('d %f' % tiempos_esperados[0])
 
-print('a) El tiempo de espera promedio fue: %f'
+print('a) El tiempo de espera promedio fue: %f dias'
       % (sum(tiempos_esperados) / len(tiempos_esperados)))
 
 print('b) El numero de tanques en el puerto fue: %f'
@@ -188,3 +229,4 @@ for terminal in puerto.terminales:
     print('   Terminal %s estuvo desocupada el %.0f%% del tiempo total' %
           (terminal.nombre, 100 -
            (terminal.tiempo_trabajado * 100 / TIEMPO_SIMULACION)))
+    print('time %f' % terminal.tiempo_trabajado)
