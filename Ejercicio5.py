@@ -12,6 +12,11 @@ EXTRA = 5
 
 tiempos_esperados = []
 
+""" VAraibles para las n-esimas simulacinoes"""
+SIMULATION            = 10000 
+TOTAL_TIEMPO_PROMEDIO = []
+TOTAL_BUQUES_SERVIDOS = []
+
 class Puerto():
     def __init__(self, env, numero_terminales):
         self.resource = simpy.Resource(env, capacity=numero_terminales)
@@ -204,29 +209,71 @@ def intervalo(l):
 
 print('Ejercicio 5 \n')
 
-env = simpy.Environment()
+for x in range(0,100):
+    #Reset de la variables
+    tiempos_esperados = []
 
-puerto = Puerto(env, NUMERO_TERMINALES)
+    #Comienza simulacion
+    env = simpy.Environment()
 
-#print( len(puerto.terminales) )
+    puerto = Puerto(env, NUMERO_TERMINALES)
 
-env.process(generator(env, puerto))
+    #print( len(puerto.terminales) )
 
-env.run(until=TIEMPO_SIMULACION)
+    env.process(generator(env, puerto))
 
+    env.run(until=TIEMPO_SIMULACION)
 
-# Por ultimo se imprimen los datos pertinentes
+    # Por ultimo se imprimen los datos
+    if (0 <= x <= 5):
+        print('a) El tiempo de espera promedio fue: %f dias'
+              % (sum(tiempos_esperados) / len(tiempos_esperados)))
 
-print('a) El tiempo de espera promedio fue: %f dias'
-      % (sum(tiempos_esperados) / len(tiempos_esperados)))
+        print('b) El numero de tanques en el puerto fue: %f'
+              % puerto.calcular_buques_servidos())
 
-print('b) El numero de tanques en el puerto fue: %f'
-      % puerto.calcular_buques_servidos())
+        print('c)')
+        puerto.terminales.sort(key=attrgetter('nombre'), reverse=False)
+        for terminal in puerto.terminales:
+            print('   Terminal %s estuvo desocupada el %.0f%% del tiempo total' %
+                  (terminal.nombre, 100 -
+                   (terminal.tiempo_trabajado * 100 / TIEMPO_SIMULACION)))
+            print('time %f' % terminal.tiempo_trabajado)
 
-print('c)')
-puerto.terminales.sort(key=attrgetter('nombre'), reverse=False)
-for terminal in puerto.terminales:
-    print('   Terminal %s estuvo desocupada el %.0f%% del tiempo total' %
-          (terminal.nombre, 100 -
-           (terminal.tiempo_trabajado * 100 / TIEMPO_SIMULACION)))
-    print('time %f' % terminal.tiempo_trabajado)
+    #Agregar a arreglos
+    TOTAL_TIEMPO_PROMEDIO.append(sum(tiempos_esperados) / len(tiempos_esperados))
+    TOTAL_BUQUES_SERVIDOS.append(puerto.calcular_buques_servidos())
+
+######################
+print('ESTADISTICAS \n\n')
+
+mean  = media(TOTAL_TIEMPO_PROMEDIO)
+mean1 = media(TOTAL_BUQUES_SERVIDOS)
+# mean1      = media(TOTAL_DECLINADOS)
+
+print "La media del total de tiempo promedio fue"
+print mean, "dias"
+print ('\n')
+print "La media del total de buques atendidos fue"
+print mean1
+
+##########
+desviation  = desv(TOTAL_TIEMPO_PROMEDIO)
+desviation1 = desv(TOTAL_BUQUES_SERVIDOS)
+print ('\n')
+print "La desviacion del total de tiempo promedio fue"
+print desviation, "dias"
+print ('\n')
+print "La desviacion del total de buques atendidos fue"
+print desviation1
+print ('\n')
+
+#############
+interval   = intervalo(TOTAL_TIEMPO_PROMEDIO)
+interval1  = intervalo(TOTAL_BUQUES_SERVIDOS)
+
+print "El intervalo de confianza del total de tiempo promedio fue"
+print interval, "dias"
+print ('\n')
+print "El intervalo de confianza del total de buques atendidos fue"
+print interval1
