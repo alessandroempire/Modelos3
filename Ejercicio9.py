@@ -40,13 +40,25 @@ tiempos_totales = []
 centro_a = Centro('A')
 centro_b = Centro('B')
 
-def funcion_a_trozos(x):
-    if (1<= x <= 3):
-        return (1 / 4) * (x - 1)
-    elif (3 < x <= 5):
-        return (1 / 4) * (5 - x)
-    else:
-        return 0
+""" Variables para las n-esimas iteraciones"""
+SIMULATION     = 100
+TOTAL_TRABAJOS = []
+TOTAL_PARADO   = []
+TOTAL_ESPERA   = []
+
+def funcion_triangular():
+    # Se genera u ~ U (0,1)
+    u = random.uniform(0,1)
+    x = 0 
+
+    # Se obitene x = funcion_triangular(u)
+    if 0 <= u <= 50:
+        x = 1 + math.sqrt(8*u)
+    elif 50 < u <= 100:
+        x = 5 - math.sqrt(8*(1-u))
+
+    #print('el x es %f' % x)
+    return x
 
 def generador(env, clientes_hora, centros):
     global total_trabajos, total_tiempo
@@ -134,8 +146,8 @@ def cliente_centro_b(env, nombre_cliente, centros, llegada):
 
         # Luego generamos en tiempo de atencion por parte del centro B por
         # la funcion a trozos
-        x = random.uniform(1,5) 
-        tiempo_atencion = funcion_a_trozos(x) #ERROR!!!!!
+        #x = random.uniform(1,5) 
+        tiempo_atencion = funcion_triangular() 
 
         if (env.now + tiempo_atencion >= TIEMPO_SIMULACION):
             centro_b.ocupado = 0
@@ -151,31 +163,139 @@ def cliente_centro_b(env, nombre_cliente, centros, llegada):
         final = env.now - llegada
         tiempos_totales.append(final)
 
+def media(l):
+    m = t = 0
+    tam = len(l)
+    # Calculo de la media
+    for i in l:
+        m += i
+
+    media = m / tam
+    return media
+
+def desv(l):
+    m = media(l)
+    t = 0
+    tam = len(l)
+    for i in l:
+        t += math.pow((i - m), 2)
+
+    varianza = t / (tam -1)
+    desv = math.sqrt(varianza)  
+    return desv
+
+def intervalo(l):
+    m = media(l)
+    d = desv(l)
+    tam = len(l)
+    inf = m - (1.96 * (d / math.sqrt(tam)))
+    sup = m + (1.96 * (d / math.sqrt(tam)))
+    inter = [inf, sup]
+    return inter
 
 #########################################################################################
 print('Ejercicio 9')
 
-env = simpy.Environment()
+for x in range(0,100):
+    #Reset de la variables
+    total_trabajos       = 0
+    tiempos_parados      = []
+    clientes_encolados_a = 0
+    clientes_encolados_b = 0
+    tiempos_totales      = []
+    centro_a = Centro('A')
+    centro_b = Centro('B')
 
-# Declaramos un nuevo recursos que representa los N cajeros
-centro_a_resource = simpy.Resource(env, capacity = 1)
-centro_b_resource = simpy.Resource(env, capacity = 1)
-centros = [centro_a_resource, centro_b_resource]
+    #Start simulation
+    env = simpy.Environment()
 
-# Procesamos el generador de clientes y corremos la simulacion
-env.process(generador(env, CLIENTES_HORA, centros))
-env.run(until=TIEMPO_SIMULACION)
+    # Declaramos un nuevo recursos que representa los N cajeros
+    centro_a_resource = simpy.Resource(env, capacity = 1)
+    centro_b_resource = simpy.Resource(env, capacity = 1)
+    centros = [centro_a_resource, centro_b_resource]
 
-# Por ultimo se imprimen los datos pertinentes
-print('a) El numero de trabajos en el taller fue: %d'
-      % (total_trabajos))
-if (len(tiempos_parados) == 0):
-    print('b) El porcentaje de veces que se para el centro A fue: 0%')
+    # Procesamos el generador de clientes y corremos la simulacion
+    env.process(generador(env, CLIENTES_HORA, centros))
+    env.run(until=TIEMPO_SIMULACION)
+
+    # Por ultimo se imprimen los datos pertinentes
+    
+    if (0 <= x <= 5):
+        print('a) El numero de trabajos en el taller fue: %d'
+          % (total_trabajos))
+
+        if (len(tiempos_parados) == 0):
+            print('b) El porcentaje de veces que se para el centro A fue: 0%')
+        else:
+            print('b) El porcentaje de veces que se para el centro A fue: %.0f%%'
+                  % (sum(tiempos_parados) * 100 / len(tiempos_parados)))
+        
+        if (len(tiempos_totales) == 0):
+            print('c) Tiempos de espera de culminacion de un trabajo fue 0 min')
+        else:
+            print('c) Tiempos de espera de culminacion de un trabajo fue %.0f min'
+                  % (sum(tiempos_totales) / len(tiempos_totales)))
+
+    #Agregar a arreglos
+    TOTAL_TRABAJOS.append(total_trabajos)
+    if (len(tiempos_parados) != 0):
+        TOTAL_PARADO.append(sum(tiempos_parados) * 100 / len(tiempos_parados))
+    if (len(tiempos_totales) != 0):
+        TOTAL_ESPERA.append(sum(tiempos_totales) / len(tiempos_totales))
+
+
+######################
+#Estadisticas
+print('ESTADISTICAS \n\n')
+
+
+mean  = media(TOTAL_TRABAJOS)
+if (len(tiempos_parados) != 0):
+    mean1 = media(TOTAL_PARADO)
 else:
-    print('b) El porcentaje de veces que se para el centro A fue: %.0f%%'
-          % (sum(tiempos_parados) * 100 / len(tiempos_parados)))
-if (len(tiempos_totales) == 0):
-    print('c) Tiempos de espera de culminacion de un trabajo fue 0 min')
+    mean1 = 0
+mean2 = media(TOTAL_ESPERA)
+
+print "La media del total de trabajos en el taller fue"
+print mean, 
+print ('\n')
+print "La media del total de veces que el centro A se paro fue"
+print mean1
+print ('\n')
+print "La media del total de tiempo de espera fue"
+print mean2, 
+
+##########
+desviation  = desv(TOTAL_TRABAJOS)
+if (len(tiempos_parados) != 0):
+    desviation1 = desv(TOTAL_PARADO)
 else:
-    print('c) Tiempos de espera de culminacion de un trabajo fue %.0f min'
-          % (sum(tiempos_totales) / len(tiempos_totales)))
+    desviation1 = 0
+desviation2 = desv(TOTAL_ESPERA)
+print ('\n')
+print "La desviacion del total de trabajos en el taller fue"
+print desviation, 
+print ('\n')
+print "La desviacion del total de veces que el centro A se paro fue"
+print desviation1
+print ('\n')
+print "La desviacion del total de tiempo de espera fue"
+print desviation2, 
+print ('\n')
+
+#############
+interval   = intervalo(TOTAL_TRABAJOS)
+if (len(tiempos_parados) != 0):
+    interval1  = intervalo(TOTAL_PARADO)
+else:
+    interval1 = 0
+interval2  = intervalo(TOTAL_ESPERA)
+
+print "El intervalo de confianza del total de trabajos en el taller fue"
+print interval, 
+print ('\n')
+print "El intervalo de confianza del del total de veces que el centro A se paro fue"
+print interval1
+print ('\n')
+print "El intervalo de confianza del del total de tiempo de espera fue"
+print interval2, 
