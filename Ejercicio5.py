@@ -8,7 +8,7 @@ RANDOM_SEED       = 42
 TIEMPO_SIMULACION = 30    	# un a~o de simulacion
 
 NUMERO_TERMINALES = 2 		# Existen N terminales en el puerto
-EXTRA = 5
+EXTRA = 3
 
 tiempos_esperados = []
 
@@ -124,7 +124,7 @@ def tipo_buque():
 
 def generator(env, puerto):
     contador_buques = 0 
-    print ('init')
+    #print ('init')
     
     while True:
         type_buque = tipo_buque()
@@ -146,14 +146,14 @@ def buque(env, nombre_buque, tipo_buque, puerto):
     global tiempos_esperados
     
     llegada = env.now
-    print ('esperando! %f' % llegada)
+    #print ('esperando! %f' % llegada)
 
     with puerto.resource.request() as req:
         yield req
 
         #regitramos la espera
         espera = env.now - llegada
-        print ('entrando %f' % env.now)
+        #print ('entrando %f' % env.now)
         #print ('llegada %f' % llegada)
         #print ('espera %f' % espera)
         tiempos_esperados.append(espera)
@@ -161,11 +161,12 @@ def buque(env, nombre_buque, tipo_buque, puerto):
         terminal = puerto.get_terminal()
 
         tiempo_work = terminal.calcular_tiempo_buque(tipo_buque)
-        print('tiempo word %f' %tiempo_work)
+        #print('tiempo word %f' %tiempo_work)
 
         if (env.now + tiempo_work >= TIEMPO_SIMULACION):
+            diff = (env.now + tiempo_work) - TIEMPO_SIMULACION
             # si me paso no debo considerar el tiempo
-            terminal.overflow(tiempo_work) 
+            terminal.overflow(diff) 
 
         #volvemos insertar terminal
         puerto.add_terminal(terminal)
@@ -173,7 +174,7 @@ def buque(env, nombre_buque, tipo_buque, puerto):
         #hace el trabajo 
         yield env.timeout(tiempo_work)
 
-        print ('saliendo %f' % env.now)
+        #print ('saliendo %f' % env.now)
 
 def media(l):
     m = t = 0
@@ -218,14 +219,13 @@ for x in range(0,100):
 
     puerto = Puerto(env, NUMERO_TERMINALES)
 
-    #print( len(puerto.terminales) )
-
     env.process(generator(env, puerto))
 
     env.run(until=TIEMPO_SIMULACION)
 
     # Por ultimo se imprimen los datos
     if (0 <= x <= 5):
+        print('\n')
         print('a) El tiempo de espera promedio fue: %f dias'
               % (sum(tiempos_esperados) / len(tiempos_esperados)))
 
@@ -238,7 +238,7 @@ for x in range(0,100):
             print('   Terminal %s estuvo desocupada el %.0f%% del tiempo total' %
                   (terminal.nombre, 100 -
                    (terminal.tiempo_trabajado * 100 / TIEMPO_SIMULACION)))
-            print('time %f' % terminal.tiempo_trabajado)
+            #print('time %f' % terminal.tiempo_trabajado)
 
     #Agregar a arreglos
     TOTAL_TIEMPO_PROMEDIO.append(sum(tiempos_esperados) / len(tiempos_esperados))
